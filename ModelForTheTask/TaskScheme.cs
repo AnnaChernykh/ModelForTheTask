@@ -8,31 +8,56 @@ using System.Data.OleDb;
 
 namespace ModelForTheTask
 {
-    public class TaskScheme : DependencyObject
+    public class TaskScheme 
     {
-        public static readonly DependencyProperty SchemeNumber;
-        public static readonly DependencyProperty SchemeID;
+        public static int SchemeNumber;
+        public static int SchemeID;
 
-        static TaskScheme()
-        {
-            SchemeNumber = DependencyProperty.Register("Number", typeof(int), typeof(TaskScheme));
-            SchemeID = DependencyProperty.Register("ID", typeof(int), typeof(TaskScheme));
-        }
+       
         public int Number
         {
-            get { return (int)GetValue(SchemeNumber); }
-            set { SetValue(SchemeNumber, value); }
+            get { return  SchemeNumber; }
+            set { SchemeNumber=value; }
         }
         public int ID
         {
-            get { return (int)GetValue(SchemeID); }
-            set { SetValue(SchemeID, value); }
+            get { return SchemeID; }
+            set { SchemeID=value; }
         }
      }
 
-    public class TaskParametrs:DependencyObject
+    public class TaskParametrs
     {
-        public static readonly DependencyProperty Generator;
-        public static readonly DependencyProperty Transformer;
+        public int ParamNumber;
+        public int Number
+        {
+            get { return ParamNumber; }
+            set { ParamNumber = value; }
+        }
+        Generator Gen = new Generator();
+        public class Generator
+        {
+            public static int GPower;
+            public static double GCosF;
+            public static double GVoltage;
+            public int Power
+            {
+                get { return GPower; }
+                set { GPower = value; }
+            }
+            public double CosF
+            {
+                get { return GCosF; }
+                set { GCosF = value; }
+            }
+            public double Voltage
+            {
+                get { return GVoltage; }
+                set { GVoltage = value; }
+            }
+        }
+        
+       
+
     }
 }
