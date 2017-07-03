@@ -28,9 +28,9 @@ namespace ModelForTheTask
         {
             this.Close();
             InitializeComponent();
-            ComposeTask Test = new ComposeTask();
-            Test.Compose();
 
+            Test Task = new Test();
+            Task.TestTask();
         }
         
     }
