@@ -8,123 +8,79 @@ using System.Data.OleDb;
 
 namespace ModelForTheTask
 {
-    public class Scheme
+    
+    public class Element
     {
-        public static int Number;
-        public static int ID;
 
+        public ElementType Type { get; set; } = ElementType.Unknown;
 
-        public int SchemeNumber
-        {
-            get { return Number; }
-            set { Number = value; }
-        }
-        public int SchemeID
-        {
-            get { return ID; }
-            set { ID = value; }
-        }
-        public void SchemeCompose(int SchemeNumber)
-        {
-            //Model Scheme = new Model();
-            //SchemeNumber = 1;
-            string connectionString = "provider=Microsoft.Jet.OLEDB.4.0;data source=" + Environment.CurrentDirectory + "\\Task.mdb";
-            OleDbConnection myOleDbConnection = new OleDbConnection(connectionString);
-            OleDbCommand FindID = myOleDbConnection.CreateCommand();
-            FindID.CommandText = string.Format("SELECT Number, ID FROM Scheme WHERE Number=" + SchemeNumber);
-            myOleDbConnection.Open();
-            OleDbDataReader myOleDbDataReader = FindID.ExecuteReader();
-            myOleDbDataReader.Read();
-            SchemeID = Convert.ToInt32(myOleDbDataReader["ID"]);
-            myOleDbDataReader.Close();
-            myOleDbConnection.Close();
+        // словарик для хранения параметров элемента
+        public Dictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
 
-           
+        // перечисление, что бы знать какой тип у элемента
+        public enum ElementType
+        {
+            Unknown, // неопределенный
+            G, // генератор
+            T, // трансформатор
+            W, // линия
+            LR // реактор
         }
     }
 
-    public class TaskParametrs
+    // и отдельный класс для задания
+    public class Task
     {
-        
-        public int Number;
-        public int Power;
-        public double CosF;
-        public double Voltage;
-        public double SupertrancRes;
-        public double Res;
-        public double TimeConst;
+        // со списком элементов
+        public List<Element> Elements { get; set; } = new List<Element>();
+    }
 
-        public int ParamNumber
-        {
-            get { return Number; }
-            set { Number = value; }
-        }
-        
-        public int GPower
-        {
-             get { return Power; }
-             set { Power = value; }
-        }
-        public double GCosF
-        {
-             get { return CosF; }
-             set { CosF = value; }
-        }
-        public double GVoltage
-        {
-             get { return Voltage; }
-             set { Voltage = value; }
-        }
-        public double GSupertrancRes
-        {
-            get { return SupertrancRes; }
-            set { SupertrancRes = value; }
-        }
-        public double GRes
-        {
-            get { return Res; }
-            set { Res = value; }
-        }
-        public double GTimeConst
-        {
-            get { return TimeConst; }
-            set { TimeConst = value; }
-        }
-
-        public void FindGenerator(int ParamNumber)
-        {
+    public static class DataBaseService
+    {
+        public static Element ReadElement(int ParamNumber, Element.ElementType type, string tablename)
+        {            
+            Element element = new Element();
             string connectionString = "provider=Microsoft.Jet.OLEDB.4.0;data source=" + Environment.CurrentDirectory + "\\Task.mdb";
             OleDbConnection myOleDbConnection = new OleDbConnection(connectionString);
             OleDbCommand FindParam = myOleDbConnection.CreateCommand();
-            FindParam.CommandText = string.Format("SELECT * FROM ParamGen WHERE Number=" + ParamNumber);
+            FindParam.CommandText = string.Format("SELECT * FROM "+tablename+" WHERE Number=" + ParamNumber);
             myOleDbConnection.Open();
             OleDbDataReader myOleDbDataReader1 = FindParam.ExecuteReader();
             myOleDbDataReader1.Read();
-            GPower = Convert.ToInt32(myOleDbDataReader1["NomPower"]);
-            GCosF= Convert.ToDouble(myOleDbDataReader1["cosjnom"]);
-            GVoltage= Convert.ToDouble(myOleDbDataReader1["Unom"]);
-            GSupertrancRes= Convert.ToDouble(myOleDbDataReader1["Xd"]);
-            GRes= Convert.ToDouble(myOleDbDataReader1["X2"]);
-            GTimeConst= Convert.ToDouble(myOleDbDataReader1["Ta"]);
+            string fieldname;
+            for (int i = 0; i < myOleDbDataReader1.FieldCount; i++)
+            {
+                fieldname = myOleDbDataReader1.GetName(i);
+                element.Parameters.Add(fieldname, myOleDbDataReader1[fieldname]);
+            }
+
             myOleDbDataReader1.Close();
             myOleDbConnection.Close();
-            
+            return element;
         }
     }  
     public class Test
     {
         public void TestTask()
-        { 
-             Scheme Scheme = new Scheme();
-             Scheme.SchemeNumber = 1;
-             Scheme.SchemeCompose(1);
-             TaskParametrs Generator = new TaskParametrs();
-             Generator.Number = 2;
-             Generator.FindGenerator(2);
+        {
+            Task task = new Task();
+            
+            task.Elements.Add(DataBaseService.ReadElement(1,Element.ElementType.Unknown,"Scheme"));
+            task.Elements.Add(DataBaseService.ReadElement(2, Element.ElementType.G, "ParamGen"));
 
-            List<double> Gen = new List<double>();
-            Gen.AddRange(new double[] { Scheme.SchemeID, Generator.GPower, Generator.GVoltage, Generator.GCosF, Generator.GSupertrancRes, Generator.GRes, Generator.GTimeConst});
-            MessageBox.Show(Gen[0] + "\n"+Gen[1]+ "\n" + Gen[2]+ "\n" + Gen[3]+ "\n" + Gen[4] + "\n" + Gen[5] + "\n" + Gen[6]);
+            string s="";
+            
+            foreach (Element el in task.Elements)
+            {
+                s += el.Type+"\n";      
+                foreach (KeyValuePair<string, object> kvp in el.Parameters)
+                {
+                    s += kvp.Key + " = " + kvp.Value.ToString() + "\n";
+                }
+            }
+            MessageBox.Show(s);
+
+           
     }     
   }}
 
