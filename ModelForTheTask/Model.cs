@@ -13,6 +13,8 @@ namespace ModelForTheTask
     {
 
         public ElementType Type { get; set; } = ElementType.Unknown;
+        public string Name;
+        public string TypeM;
 
         // словарик для хранения параметров элемента
         public Dictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
@@ -33,54 +35,92 @@ namespace ModelForTheTask
     {
         // со списком элементов
         public List<Element> Elements { get; set; } = new List<Element>();
+
+        
     }
 
     public static class DataBaseService
     {
-        public static Element ReadElement(int ParamNumber, Element.ElementType type, string tablename)
-        {            
-            Element element = new Element();
-            string connectionString = "provider=Microsoft.Jet.OLEDB.4.0;data source=" + Environment.CurrentDirectory + "\\Task.mdb";
+        
+
+        public static Task ReadElement(int ParamNumber, Element.ElementType type, string tablename)
+        {
+            Task task = new Task();
+            string connectionString = "provider=Microsoft.Jet.OLEDB.4.0;data source=" + Environment.CurrentDirectory + "\\ExamTask.mdb";
             OleDbConnection myOleDbConnection = new OleDbConnection(connectionString);
-            OleDbCommand FindParam = myOleDbConnection.CreateCommand();
-            FindParam.CommandText = string.Format("SELECT * FROM "+tablename+" WHERE Number=" + ParamNumber);
+            OleDbCommand FindElement = myOleDbConnection.CreateCommand();
+            FindElement.CommandText = string.Format("SELECT * FROM "+ tablename +" WHERE Number=" + ParamNumber);
             myOleDbConnection.Open();
-            OleDbDataReader myOleDbDataReader1 = FindParam.ExecuteReader();
+            OleDbDataReader myOleDbDataReader1 = FindElement.ExecuteReader();
             myOleDbDataReader1.Read();
             string fieldname;
-            for (int i = 0; i < myOleDbDataReader1.FieldCount; i++)
+            for (int i = 1; i < myOleDbDataReader1.FieldCount; i++)
             {
                 fieldname = myOleDbDataReader1.GetName(i);
-                element.Parameters.Add(fieldname, myOleDbDataReader1[fieldname]);
+                if (myOleDbDataReader1[fieldname].ToString() != "")
+                {
+                    Element element = new Element();
+                    element.Type = type;
+                    element.Name = fieldname;
+                    element.TypeM = myOleDbDataReader1[fieldname].ToString();
+                    task.Elements.Add(element);
+                }
+
+            }
+            foreach (Element el in task.Elements)
+            {
+                myOleDbDataReader1.Close();
+                OleDbCommand FindParam = myOleDbConnection.CreateCommand();
+                FindParam.CommandText = string.Format("SELECT * FROM "+type+" WHERE ID='" + el.TypeM+"'");
+                OleDbDataReader myOleDbDataReader2 = FindParam.ExecuteReader();
+                myOleDbDataReader2.Read();
+                for (int i = 1; i < myOleDbDataReader2.FieldCount; i++)
+                {
+                    fieldname = myOleDbDataReader2.GetName(i);
+                    if (myOleDbDataReader2[fieldname].ToString() != "")
+                    {
+                        el.Parameters.Add(fieldname, myOleDbDataReader2[fieldname]);
+                    }
+                }
+                myOleDbDataReader2.Close();
             }
 
-            myOleDbDataReader1.Close();
             myOleDbConnection.Close();
-            return element;
+
+            return task;
         }
-    }  
+    }
     public class Test
     {
         public void TestTask()
         {
             Task task = new Task();
-            
-            task.Elements.Add(DataBaseService.ReadElement(1,Element.ElementType.Unknown,"Scheme"));
-            task.Elements.Add(DataBaseService.ReadElement(2, Element.ElementType.G, "ParamGen"));
+            Task taskG = new Task();
+            Task taskT = new Task();
 
-            string s="";
+            int ParamVariant = 12; //для каждой схемы 5 вариантов исходных параментров элементов 
+
+            taskG = DataBaseService.ReadElement(ParamVariant, Element.ElementType.G, "VarGen");
+            taskT= DataBaseService.ReadElement(ParamVariant, Element.ElementType.T, "VarTR");
             
-            foreach (Element el in task.Elements)
+
+            string s = "";
+
+            foreach (Element el in taskT.Elements)
             {
-                s += el.Type+"\n";      
+                s += el.Type + ", ";
+                s += el.Name + ", ";
+                s += el.TypeM + ",";
                 foreach (KeyValuePair<string, object> kvp in el.Parameters)
                 {
-                    s += kvp.Key + " = " + kvp.Value.ToString() + "\n";
+                    s += kvp.Key + " = " + kvp.Value.ToString() + ",";
                 }
+                s +=  "\n";
             }
+
             MessageBox.Show(s);
 
-           
-    }     
-  }}
+
+        }
+    }}
 
